@@ -1,16 +1,58 @@
 #!/bin/bash
 
-# wt - Create a new worktree branch and open it in Warp with 3-pane layout
-# Usage: wt branch-name
+# wt - Create or delete a worktree branch
+# Usage:
+#   wt branch-name        - Create new worktree branch and open in Warp with 3-pane layout
+#   wt delete branch-name - Delete worktree and its branch
 
 set -e  # Exit on error
 
-# Check if branch name is provided
+# Check if arguments are provided
 if [ $# -eq 0 ]; then
-    echo "Usage: wt branch-name"
+    echo "Usage:"
+    echo "  wt branch-name        - Create new worktree branch"
+    echo "  wt delete branch-name - Delete worktree and branch"
     exit 1
 fi
 
+# Handle delete command
+if [ "$1" = "delete" ]; then
+    if [ $# -lt 2 ]; then
+        echo "Usage: wt delete branch-name"
+        exit 1
+    fi
+
+    BRANCH_NAME="$2"
+
+    # Get the repository root
+    if ! git rev-parse --git-dir > /dev/null 2>&1; then
+        echo "Error: Not in a git repository"
+        exit 1
+    fi
+
+    REPO_ROOT=$(git rev-parse --show-toplevel)
+    WORKTREE_BASE=$(dirname "$REPO_ROOT")
+    WORKTREE_PATH="$WORKTREE_BASE/$BRANCH_NAME"
+
+    # Check if worktree exists
+    if [ ! -d "$WORKTREE_PATH" ]; then
+        echo "Error: Worktree not found at $WORKTREE_PATH"
+        exit 1
+    fi
+
+    # Remove worktree
+    echo "Removing worktree at $WORKTREE_PATH..."
+    git worktree remove "$WORKTREE_PATH"
+
+    # Delete branch
+    echo "Deleting branch '$BRANCH_NAME'..."
+    git branch -D "$BRANCH_NAME"
+
+    echo "Successfully deleted worktree and branch '$BRANCH_NAME'"
+    exit 0
+fi
+
+# Otherwise, create new worktree
 BRANCH_NAME="$1"
 
 # Check if we're in a git repository
