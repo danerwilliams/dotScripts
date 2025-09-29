@@ -15,6 +15,18 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
+# Handle --help flag
+if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+    echo "Usage:"
+    echo "  wt branch-name        - Create new worktree branch"
+    echo "  wt delete branch-name - Delete worktree and branch"
+    echo ""
+    echo "Initialization:"
+    echo "  If .initialize-worktree.sh exists in the primary worktree root,"
+    echo "  it will be executed after creating the new worktree."
+    exit 0
+fi
+
 # Handle delete command
 if [ "$1" = "delete" ]; then
     if [ $# -lt 2 ]; then
