@@ -68,12 +68,6 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 WORKTREE_BASE=$(dirname "$REPO_ROOT")
 WORKTREE_PATH="$WORKTREE_BASE/$BRANCH_NAME"
 
-# Check if branch already exists
-if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"; then
-    echo "Error: Branch '$BRANCH_NAME' already exists"
-    exit 1
-fi
-
 # Check if worktree already exists
 if [ -d "$WORKTREE_PATH" ]; then
     echo "Error: Worktree already exists at $WORKTREE_PATH"
@@ -83,9 +77,16 @@ fi
 # Create worktree base directory if needed
 mkdir -p "$WORKTREE_BASE"
 
-# Create the new branch and worktree
-echo "Creating worktree at $WORKTREE_PATH..."
-git worktree add -b "$BRANCH_NAME" "$WORKTREE_PATH"
+# Check if branch already exists
+if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"; then
+    # Create worktree for existing branch
+    echo "Branch '$BRANCH_NAME' exists. Creating worktree at $WORKTREE_PATH..."
+    git worktree add "$WORKTREE_PATH" "$BRANCH_NAME"
+else
+    # Create the new branch and worktree
+    echo "Creating worktree at $WORKTREE_PATH..."
+    git worktree add -b "$BRANCH_NAME" "$WORKTREE_PATH"
+fi
 
 # Track with Graphite if available
 if command -v gt &> /dev/null; then
