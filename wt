@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# wt - Create a new worktree branch and open it in Warp with 3-pane layout
+# Usage: wt branch-name
+
+set -e  # Exit on error
+
+# Check if branch name is provided
+if [ $# -eq 0 ]; then
+    echo "Usage: wt branch-name"
+    exit 1
+fi
+
+BRANCH_NAME="$1"
+
+# Check if we're in a git repository
+if ! git rev-parse --git-dir > /dev/null 2>&1; then
+    echo "Error: Not in a git repository"
+    exit 1
+fi
+
+# Get the repository root
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
+# Worktrees go in the parent directory of the current repo/worktree
+WORKTREE_BASE=$(dirname "$REPO_ROOT")
+WORKTREE_PATH="$WORKTREE_BASE/$BRANCH_NAME"
+
+# Check if branch already exists
+if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"; then
+    echo "Error: Branch '$BRANCH_NAME' already exists"
+    exit 1
+fi
+
+# Check if worktree already exists
+if [ -d "$WORKTREE_PATH" ]; then
+    echo "Error: Worktree already exists at $WORKTREE_PATH"
+    exit 1
+fi
+
+# Create worktree base directory if needed
+mkdir -p "$WORKTREE_BASE"
+
+# Create the new branch and worktree
+echo "Creating worktree at $WORKTREE_PATH..."
+git worktree add -b "$BRANCH_NAME" "$WORKTREE_PATH"
+
+# Track with Graphite if available
+if command -v gt &> /dev/null; then
+    (cd "$WORKTREE_PATH" && gt branch track 2>/dev/null && echo "Branch tracked in Graphite")
+fi
+
+# Open new Warp tab with the worktree directory
+open "warp://action/new_tab?path=$WORKTREE_PATH"
+
+# Wait for the tab to open
+sleep 1
+
+# Create 3-pane layout using keyboard shortcuts
+# Delays are needed to ensure Warp fully processes each split command before the next keystroke
+osascript <<EOF
+tell application "System Events"
+    -- Split vertically to create left and right panes (Cmd+D)
+    keystroke "d" using command down
+    delay 0.2
+
+    -- Split the right pane horizontally (Cmd+Shift+D)
+    keystroke "d" using {command down, shift down}
+    delay 0.2
+
+    -- Return to first (left) pane - need two movements since focus is on top-right
+    keystroke "[" using command down
+    delay 0.1
+    keystroke "[" using command down
+end tell
+EOF
+
+echo "Created branch '$BRANCH_NAME' at $WORKTREE_PATH with 3-pane layout"
