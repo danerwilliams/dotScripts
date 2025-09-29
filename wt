@@ -92,6 +92,10 @@ if command -v gt &> /dev/null; then
     (cd "$WORKTREE_PATH" && gt branch track 2>/dev/null && echo "Branch tracked in Graphite")
 fi
 
+# Run yarn in the background
+echo "Running yarn in background..."
+(cd "$WORKTREE_PATH" && yarn > /dev/null 2>&1 &)
+
 # Open new Warp tab with the worktree directory
 open "warp://action/new_tab?path=$WORKTREE_PATH"
 
