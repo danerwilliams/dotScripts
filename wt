@@ -93,9 +93,12 @@ if command -v gt &> /dev/null; then
     (cd "$WORKTREE_PATH" && gt branch track 2>/dev/null && echo "Branch tracked in Graphite")
 fi
 
-# Run yarn in the background
-echo "Running yarn in background..."
-(cd "$WORKTREE_PATH" && yarn > /dev/null 2>&1 &)
+# Run initialization script if it exists
+INIT_SCRIPT="$WORKTREE_BASE/$(basename "$REPO_ROOT")/.initialize-worktree.sh"
+if [ -f "$INIT_SCRIPT" ]; then
+    echo "Running initialization script..."
+    (cd "$WORKTREE_PATH" && bash "$INIT_SCRIPT")
+fi
 
 # Open new Warp tab with the worktree directory
 open "warp://action/new_tab?path=$WORKTREE_PATH"
