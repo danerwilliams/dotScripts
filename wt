@@ -52,9 +52,15 @@ if [ "$1" = "delete" ]; then
         exit 1
     fi
 
-    # Remove worktree
+    # Deinitialize submodules if they exist
+    if [ -f "$WORKTREE_PATH/.gitmodules" ]; then
+        echo "Deinitializing submodules..."
+        (cd "$WORKTREE_PATH" && git submodule deinit --all -f)
+    fi
+
+    # Remove worktree (use --force to handle submodules)
     echo "Removing worktree at $WORKTREE_PATH..."
-    git worktree remove "$WORKTREE_PATH"
+    git worktree remove --force "$WORKTREE_PATH"
 
     # Delete branch
     echo "Deleting branch '$BRANCH_NAME'..."
