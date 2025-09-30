@@ -82,34 +82,33 @@ WORKTREE_PATH="$WORKTREE_BASE/$BRANCH_NAME"
 
 # Check if worktree already exists
 if [ -d "$WORKTREE_PATH" ]; then
-    echo "Error: Worktree already exists at $WORKTREE_PATH"
-    exit 1
-fi
-
-# Create worktree base directory if needed
-mkdir -p "$WORKTREE_BASE"
-
-# Check if branch already exists
-if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"; then
-    # Create worktree for existing branch
-    echo "Branch '$BRANCH_NAME' exists. Creating worktree at $WORKTREE_PATH..."
-    git worktree add "$WORKTREE_PATH" "$BRANCH_NAME"
+    echo "Worktree already exists at $WORKTREE_PATH"
 else
-    # Create the new branch and worktree
-    echo "Creating worktree at $WORKTREE_PATH..."
-    git worktree add -b "$BRANCH_NAME" "$WORKTREE_PATH"
-fi
+    # Create worktree base directory if needed
+    mkdir -p "$WORKTREE_BASE"
 
-# Track with Graphite if available
-if command -v gt &> /dev/null; then
-    (cd "$WORKTREE_PATH" && gt branch track 2>/dev/null && echo "Branch tracked in Graphite")
-fi
+    # Check if branch already exists
+    if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"; then
+        # Create worktree for existing branch
+        echo "Branch '$BRANCH_NAME' exists. Creating worktree at $WORKTREE_PATH..."
+        git worktree add "$WORKTREE_PATH" "$BRANCH_NAME"
+    else
+        # Create the new branch and worktree
+        echo "Creating worktree at $WORKTREE_PATH..."
+        git worktree add -b "$BRANCH_NAME" "$WORKTREE_PATH"
 
-# Run initialization script if it exists
-INIT_SCRIPT="$WORKTREE_BASE/$(basename "$REPO_ROOT")/.initialize-worktree.sh"
-if [ -f "$INIT_SCRIPT" ]; then
-    echo "Running initialization script..."
-    (cd "$WORKTREE_PATH" && bash "$INIT_SCRIPT")
+        # Track with Graphite if available (only for new branches)
+        if command -v gt &> /dev/null; then
+            (cd "$WORKTREE_PATH" && gt branch track 2>/dev/null && echo "Branch tracked in Graphite")
+        fi
+    fi
+
+    # Run initialization script if it exists
+    INIT_SCRIPT="$WORKTREE_BASE/$(basename "$REPO_ROOT")/.initialize-worktree.sh"
+    if [ -f "$INIT_SCRIPT" ]; then
+        echo "Running initialization script..."
+        (cd "$WORKTREE_PATH" && bash "$INIT_SCRIPT")
+    fi
 fi
 
 # Open new Warp tab with the worktree directory
