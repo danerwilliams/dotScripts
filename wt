@@ -2,24 +2,27 @@
 
 # wt - Create or delete a worktree branch
 # Usage:
-#   wt branch-name        - Create new worktree branch and open in Warp with 3-pane layout
-#   wt delete branch-name - Delete worktree and its branch
+#   wt branch-name [base-branch] - Create new worktree branch and open in Warp with 3-pane layout
+#   wt delete branch-name        - Delete worktree and its branch
 
 set -e  # Exit on error
 
 # Check if arguments are provided
 if [ $# -eq 0 ]; then
     echo "Usage:"
-    echo "  wt branch-name        - Create new worktree branch"
-    echo "  wt delete branch-name - Delete worktree and branch"
+    echo "  wt branch-name [base-branch] - Create new worktree branch"
+    echo "  wt delete branch-name        - Delete worktree and branch"
     exit 1
 fi
 
 # Handle --help flag
 if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     echo "Usage:"
-    echo "  wt branch-name        - Create new worktree branch"
-    echo "  wt delete branch-name - Delete worktree and branch"
+    echo "  wt branch-name [base-branch] - Create new worktree branch"
+    echo "  wt delete branch-name        - Delete worktree and branch"
+    echo ""
+    echo "Arguments:"
+    echo "  base-branch - Optional branch to create from (defaults to current branch)"
     echo ""
     echo "Initialization:"
     echo "  If .initialize-worktree.sh exists in the primary worktree root,"
@@ -72,6 +75,7 @@ fi
 
 # Otherwise, create new worktree
 BRANCH_NAME="$1"
+BASE_BRANCH="${2:-}"  # Optional base branch
 
 # Check if we're in a git repository
 if ! git rev-parse --git-dir > /dev/null 2>&1; then
@@ -100,8 +104,13 @@ else
         git worktree add "$WORKTREE_PATH" "$BRANCH_NAME"
     else
         # Create the new branch and worktree
-        echo "Creating worktree at $WORKTREE_PATH..."
-        git worktree add -b "$BRANCH_NAME" "$WORKTREE_PATH"
+        if [ -n "$BASE_BRANCH" ]; then
+            echo "Creating worktree at $WORKTREE_PATH from base branch '$BASE_BRANCH'..."
+            git worktree add -b "$BRANCH_NAME" "$WORKTREE_PATH" "$BASE_BRANCH"
+        else
+            echo "Creating worktree at $WORKTREE_PATH..."
+            git worktree add -b "$BRANCH_NAME" "$WORKTREE_PATH"
+        fi
 
         # Track with Graphite if available (only for new branches)
         if command -v gt &> /dev/null; then
