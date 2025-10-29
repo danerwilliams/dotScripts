@@ -88,7 +88,9 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 
 # Worktrees go in the parent directory of the current repo/worktree
 WORKTREE_BASE=$(dirname "$REPO_ROOT")
-WORKTREE_PATH="$WORKTREE_BASE/$BRANCH_NAME"
+# Replace / with - in branch name for directory path
+WORKTREE_DIR_NAME="${BRANCH_NAME//\//-}"
+WORKTREE_PATH="$WORKTREE_BASE/$WORKTREE_DIR_NAME"
 
 # Check if worktree already exists
 if [ -d "$WORKTREE_PATH" ]; then
